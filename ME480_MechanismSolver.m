@@ -36,7 +36,7 @@ theta3_fig_g = 45; %approximate theta 3 for determining configuration of
 omega_2 = 100*2*pi/60; %input velocity
 
 %Custom input range for crank in local coordinates
-override_togs = 0; %change to 1 to use custom range
+override_togs = 1; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
 
 %% Crank-Slider Mechanism Parameters
@@ -56,15 +56,21 @@ theta3_cs_fig_g = 315; %approximate theta 3 of crank slider.
                     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _  _     ____          _____    _____ _____ _   _ 
+%  | || |   |  _ \   /\   |  __ \  |  __ \_   _| \ | |
+%  | || |_  | |_) | /  \  | |__) | | |__) || | |  \| |
+%  |__   _| |  _ < / /\ \ |  _  /  |  ___/ | | | . ` |
+%     | |   | |_) / ____ \| | \ \  | |    _| |_| |\  |
+%     |_|   |____/_/    \_\_|  \_\ |_|   |_____|_| \_|                                                   
 %% Toggle Positions
 % Grashof determination
 links = [a,b,c,d];
 grash = 0; %flag for grashof
 if (max(links)+ min(links)) <= sum(links)-(max(links)+ min(links))
-    disp('GRASHOF')
+    disp('GRASHOF MECHANISM')
     grash = 1;
 else
-    disp('NON-GRASHOF')
+    disp('NON-GRASHOF MECHANISM')
 end
 
 %Flags for number of toggles
@@ -308,9 +314,12 @@ end
 
 %% Print Relevant Values
 if length(theta2g) == 1
-    fprintf('For Theta2g = %.3f:\n    Theta3g = %.3f\n    Theta4g = %.3f\n',theta2g, theta3g, theta4g)
-
-    fprintf('Angles shown in figure, based on Theta2g_fig = %.3f:\n     Theta3g_fig = %.3f\n     Theta4g_fig = %.3f\n', theta2_fig_g, theta3current_fig_g, theta4current_fig_g)
+    fprintf('For Theta2g = %.3f:\nTheta3g = %.3f\n',theta2g, theta3g)
+    fprintf('Theta4g = %.3f\n\n', theta4g)
+    fprintf('Angles shown in the figure:\nTheta2g_fig = %.3f:\n',...
+        theta2_fig_g)
+    fprintf('Theta3g_fig = %.3f\nTheta4g_fig = %.3f\n\n', ...
+        theta3current_fig_g, theta4current_fig_g)
 end
 
 %% Plot Coupler and Output Angles
@@ -414,43 +423,52 @@ elseif P_link == 'c' %O4 is at origin
 end
 
 %% Velocity Analysis
-omega_3closed = a*omega_2/b .* (sind(theta4closed_g-theta2g)./sind(theta3closed_g-...
-    theta4closed_g));
-omega_3open = a*omega_2/b .* (sind(theta4open_g-theta2g)./sind(theta3open_g-...
-    theta4open_g));
+omega_3 = a*omega_2/b .* (sind(theta4g-theta2g)./sind(theta3g-...
+    theta4g));
 
-omega_4closed = a*omega_2/c .* (sind(-theta3closed_g+theta2g)./sind(theta4closed_g-...
-    theta3closed_g));
-omega_4open = a*omega_2/c .* (sind(-theta3open_g+theta2g)./sind(theta4open_g-...
-    theta3open_g));
+omega_4 = a*omega_2/c .* (sind(-theta3g+theta2g)./sind(theta4g-...
+    theta3g));
 
+% velocity of A (crank end), is tangential to crank arc
 VA_g = a*omega_2*(-sind(theta2g)+1i*cosd(theta2g));
 
-VBA_open_g = b*omega_3open .*(-sind(theta3open_g)+1i*cosd(theta3open_g));
-VBA_closed_g = b*omega_3closed .*(-sind(theta3closed_g)+1i*cosd(theta3closed_g));
+% velocity of B relative to A
+VBA_g = b*omega_3 .*(-sind(theta3g)+1i*cosd(theta3g));
 
-VB_open_g = c*omega_4open .*(-sind(theta4open_g)+1i*cosd(theta4open_g));
-VB_closed_g = c*omega_4closed .*(-sind(theta4closed_g)+1i*cosd(theta4closed_g));
+% velocity of B, is tangential to output arc
+VB_g = c*omega_4 .*(-sind(theta4g)+1i.*cosd(theta4g));
 
-VPA_open_g = p*omega_3open .* -sind(theta3open_g + delta) + 1i*p.*omega_3open ...
-    .* cosd(theta3open_g+delta);
-VPA_closed_g = p*omega_3closed .* -sind(theta3closed_g + delta) + 1i*p.*omega_3closed ...
-    .*cosd(theta3closed_g+delta);
+% velocity of P relative to A
+VPA_g = p*omega_3 .* -sind(theta3g + delta) + 1i*p.*omega_3 ...
+    .* cosd(theta3g+delta);
+% velocity of P
+VP_g = VA_g + VPA_g;
 
-VP_closed_g = VA_g + VPA_closed_g;
-VP_open_g = VA_g + VPA_open_g;
-
-VPmag_open = abs(VP_open_g);
-VPmag_closed = abs(VP_closed_g);
+% velocity magnitudes
+VA_mag = abs(VA_g);
+VB_mag = abs(VB_g);
+VPmag = abs(VP_g);
 
 %% Plot velocity
 figure(5)
-plot(theta2g, VPmag_closed, '.', theta2g, VPmag_open, '.');
-title('Point P Velocity vs Input Angle (Global)')
+plot(theta2g, VP_mag, '.', theta2g, VPmag, '.');
 xlabel('Input Angle (\theta_2) [deg]')
 ylabel('|V_P| [units/s]')
-legend('Closed','Open')
 
+if open
+    title('Point P Velocity vs Input Angle (Open)')
+else
+    title('Point P Velocity vs Input Angle (Closed)')
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%    _____ _____            _   _ _  __ _____ _      _____ _____  ______ 
+%   / ____|  __ \     /\   | \ | | |/ // ____| |    |_   _|  __ \|  ____|
+%  | |    | |__) |   /  \  |  \| | ' /| (___ | |      | | | |  | | |__   
+%  | |    |  _  /   / /\ \ | . ` |  <  \___ \| |      | | | |  | |  __|  
+%  | |____| | \ \  / ____ \| |\  | . \ ____) | |____ _| |_| |__| | |____ 
+%   \_____|_|  \_\/_/    \_\_| \_|_|\_\_____/|______|_____|_____/|______|
+                                                                       
 %% Crank-Slider
 % assign crank-slider input as 4bar output if applicable
 if fourbar_to_crankslider
