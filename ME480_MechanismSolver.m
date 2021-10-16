@@ -36,7 +36,7 @@ theta3_fig_g = 20; %approximate theta 3 for determining configuration of
 omega_2 = 100*2*pi/60; %input velocity
 
 %Custom input range for crank in local coordinates
-override_togs = 0; %change to 1 to use custom range
+override_togs = 1; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
 
 %% Crank-Slider Mechanism Parameters
@@ -107,22 +107,23 @@ else %both toggle equations must be valid
     theta_tog1_l = (acosd(tog1_inards)); % plus
     theta_tog2_l = (acosd(tog2_inards)); % minus
 end
-%create vector with original toggle points
-togs_l = [theta_tog1_l, theta_tog2_l];
-
-% create vector with positive toggle points
-togs_l_pos = togs_l + 360.*(togs_l < 0);
-
-% convert to global
-togs_g = togs_l_pos - theta1;
 
 %% Create input vector for current configuration
 %determine if approximate theta 2 is between cw or ccw range of togs
-if theta2_fig_l < max(togs_l_pos) && theta2_fig_g > min(togs_l_pos)
-    toggle_dir = 1; %in this case the configuration lies in the ccw range
-                    %of the toggle positions
-else
-    toggle_dir = 0; %else configuration must be in the cw range
+if not(Notog)
+    %create vector with original toggle points
+    togs_l = [theta_tog1_l, theta_tog2_l];
+    % create vector with positive toggle points
+    togs_l_pos = togs_l + 360.*(togs_l < 0);
+    % convert to global
+    togs_g = togs_l_pos - theta1;
+    
+    if theta2_fig_l < max(togs_l_pos) && theta2_fig_g > min(togs_l_pos)
+        toggle_dir = 1; %in this case the configuration lies in the ccw range
+                        %of the toggle positions
+    else
+        toggle_dir = 0; %else configuration must be in the cw range
+    end
 end
 
 %case for opposite and equal toggle angles. abs will be 0 to 180 deg
