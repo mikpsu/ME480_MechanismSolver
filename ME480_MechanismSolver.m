@@ -284,7 +284,7 @@ end
 %check if open or closed coupler angle is closer to visually-estimated
     %coupler angle in figure. Comparison of absolute differences
 if abs(theta3open_fig_g-theta3_fig_g) > abs(theta3closed_fig_g-theta3_fig_g)
-    disp('CURRENT POSITION IN FIGURE IS CLOSED CONFIGURATION')
+    disp('FIGURE DEPICTS THE CLOSED CONFIGURATION')
     % flags for open/closed
     closed = 1;
     open = 0;
@@ -295,7 +295,7 @@ if abs(theta3open_fig_g-theta3_fig_g) > abs(theta3closed_fig_g-theta3_fig_g)
     theta3g = theta3closed_g;
     theta4g = theta4closed_g;
 else
-    disp('CURRENT POSITION IN FIGURE IS OPEN CONFIGURATION')
+    disp('FIGURE DEPICTS THE OPEN CONFIGURATION')
     % flags for open/closed
     open = 1;
     closed = 0; 
