@@ -12,10 +12,10 @@ slidercrank_to_fourbar = 0; %
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-a = 1.0; %input (crank) length
-b = 2.06; %coupler length
-c = 2.33; %output length
-d = 2.22; %ground length
+a = 0.785; %input (crank) length
+b = 0.356; %coupler length
+c = 0.95; %output length
+d = 0.544; %ground length
 
 % transform between local and global coordinates
 theta1 = (0); %ccw angle from local +x axis to global X axis
@@ -23,20 +23,20 @@ theta1 = (0); %ccw angle from local +x axis to global X axis
      
 % point of interest P on linkage
 P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
-p = 3.06 ; %distance from link pin joint to desired point P (e.g. AP)
-delta = -31; %fixed angle between selected link vector and point vector on 
+p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
+delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
                 
 % position of mechanism shown in figure
-theta2_fig_g = 60; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 100; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
 theta2_fig_l = theta2_fig_g + theta1;                    
-theta3_fig_g = 45; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 20; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
 omega_2 = 100*2*pi/60; %input velocity
 
 %Custom input range for crank in local coordinates
-override_togs = 1; %change to 1 to use custom range
+override_togs = 0; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
 
 %% Crank-Slider Mechanism Parameters
@@ -61,7 +61,8 @@ theta3_cs_fig_g = 315; %approximate theta 3 of crank slider.
 %  | || |_  | |_) | /  \  | |__) | | |__) || | |  \| |
 %  |__   _| |  _ < / /\ \ |  _  /  |  ___/ | | | . ` |
 %     | |   | |_) / ____ \| | \ \  | |    _| |_| |\  |
-%     |_|   |____/_/    \_\_|  \_\ |_|   |_____|_| \_|                                                   
+%     |_|   |____/_/    \_\_|  \_\ |_|   |_____|_| \_|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                                                   
 %% Toggle Positions
 % Grashof determination
 links = [a,b,c,d];
@@ -73,55 +74,57 @@ else
     disp('NON-GRASHOF MECHANISM')
 end
 
+% Determine toggle points
 %Flags for number of toggles
 Onetog = 0;
-
 Twotog = 0;
+Notog = 0;
 
-if not(grash) %there must be toggle positions
-    % Test for NaN case
-    tog1_inards = (a^2+d^2-b^2-c^2)/(2*a*d)+b*c/(a*d);
-    tog2_inards = (a^2+d^2-b^2-c^2)/(2*a*d)-b*c/(a*d);
+% Test for NaN case
+tog1_inards = (a^2+d^2-b^2-c^2)/(2*a*d)+b*c/(a*d);
+tog2_inards = (a^2+d^2-b^2-c^2)/(2*a*d)-b*c/(a*d);
 
-    % Calculate the two toggle positions, in local coordinates
-    if xor((abs(tog1_inards) > 1), (abs(tog2_inards) > 1))
-        %checks that ONLY one of the toggle equations is valid
-        Onetog = 1; %flag that we have opposite/equal togs
-        disp('EQUAL AND OPPOSITE TOGGLE POSITIONS')
-        if abs(tog1_inards) < 1 %plus case is valid
-            theta_tog1_l = (acosd(tog1_inards)); %plus
-            theta_tog2_l = -theta_tog1_l;
+% Calculate the two toggle positions, in local coordinates
+if xor((abs(tog1_inards) > 1), (abs(tog2_inards) > 1))
+    %checks that ONLY one of the toggle equations is valid
+    Onetog = 1; %flag that we have opposite/equal togs
+    disp('EQUAL AND OPPOSITE TOGGLE POSITIONS')
+    if abs(tog1_inards) < 1 %plus case is valid
+        theta_tog1_l = (acosd(tog1_inards)); %plus
+        theta_tog2_l = -theta_tog1_l;
 
-        else %minus case is valid
-            theta_tog2_l = (acosd(tog2_inards)); % minus
-            theta_tog1_l = -theta_tog2_l;
-        end
-
-    else %both toggle equations must be valid
-        disp('TWO UNIQUE TOGGLE POSITIONS')
-        Twotog = 1;
-        theta_tog1_l = (acosd(tog1_inards)); % plus
+    else %minus case is valid
         theta_tog2_l = (acosd(tog2_inards)); % minus
+        theta_tog1_l = -theta_tog2_l;
     end
-    %create vector with original toggle points
-    togs_l = [theta_tog1_l, theta_tog2_l];
+elseif (abs(tog1_inards) > 1) && (abs(tog2_inards) > 1) 
+    %checks that NEITHER toggle equations are valid
+    disp('NO TOGGLE POSITIONS')
+    Notog = 1;
+else %both toggle equations must be valid
+    disp('TWO UNIQUE TOGGLE POSITIONS')
+    Twotog = 1;
+    theta_tog1_l = (acosd(tog1_inards)); % plus
+    theta_tog2_l = (acosd(tog2_inards)); % minus
+end
+%create vector with original toggle points
+togs_l = [theta_tog1_l, theta_tog2_l];
 
-    % create vector with positive toggle points
-    togs_l_pos = togs_l + 360.*(togs_l < 0);
+% create vector with positive toggle points
+togs_l_pos = togs_l + 360.*(togs_l < 0);
 
-    % convert to global
-    togs_g = togs_l_pos - theta1;
-    
-    %determine if approximate theta 2 is between cw or ccw range of togs
-    if theta2_fig_l < max(togs_l_pos) && theta2_fig_g > min(togs_l_pos)
-        toggle_dir = 1; %in this case the configuration lies in the ccw range
-                        %of the toggle positions
-    else
-        toggle_dir = 0; %else configuration must be in the cw range
-    end
+% convert to global
+togs_g = togs_l_pos - theta1;
+
+%% Create input vector for current configuration
+%determine if approximate theta 2 is between cw or ccw range of togs
+if theta2_fig_l < max(togs_l_pos) && theta2_fig_g > min(togs_l_pos)
+    toggle_dir = 1; %in this case the configuration lies in the ccw range
+                    %of the toggle positions
+else
+    toggle_dir = 0; %else configuration must be in the cw range
 end
 
-%% Create input vector
 %case for opposite and equal toggle angles. abs will be 0 to 180 deg
 if override_togs > 0
     theta2l = custom_input;
@@ -149,7 +152,7 @@ else
 end
 
 % convert local input range to global
-if not(grash)
+if not(Notog)
     theta2g = theta2l - theta1;
     theta2g = theta2g + 360.*(theta2g < 0);
 end
@@ -447,11 +450,11 @@ VP_g = VA_g + VPA_g;
 % velocity magnitudes
 VA_mag = abs(VA_g);
 VB_mag = abs(VB_g);
-VPmag = abs(VP_g);
+VP_mag = abs(VP_g);
 
 %% Plot velocity
 figure(5)
-plot(theta2g, VP_mag, '.', theta2g, VPmag, '.');
+plot(theta2g, VP_mag, '.');
 xlabel('Input Angle (\theta_2) [deg]')
 ylabel('|V_P| [units/s]')
 
@@ -461,6 +464,7 @@ else
     title('Point P Velocity vs Input Angle (Closed)')
 end
 
+return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %    _____ _____            _   _ _  __ _____ _      _____ _____  ______ 
 %   / ____|  __ \     /\   | \ | | |/ // ____| |    |_   _|  __ \|  ____|
@@ -468,19 +472,26 @@ end
 %  | |    |  _  /   / /\ \ | . ` |  <  \___ \| |      | | | |  | |  __|  
 %  | |____| | \ \  / ____ \| |\  | . \ ____) | |____ _| |_| |__| | |____ 
 %   \_____|_|  \_\/_/    \_\_| \_|_|\_\_____/|______|_____|_____/|______|
-                                                                       
-%% Crank-Slider
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                                                                       
+%% Determine Configuration of Crank-Slider Mechanism
+
+% find theta3cs open and closed for theta2cs_g, compare to theta3_cs_fig_g
+% using absolute method again.
+
+
+
+
+%% Velocity Analysis
+theta2cs_g = thetaP_g;
+% theta4cs_g, theta3cs_g
+
+
+
 % assign crank-slider input as 4bar output if applicable
 if fourbar_to_crankslider
-    theta2cs_closed_g = thetaPclosed_g;
-    theta2cs_open_g = thetaPopen_g;
+    theta2cs_g = thetaP_g;
 else %crank slider input
-    theta2cs_closed_g = 0:0.5:360; %there are no toggle positions for cs
-    theta2cs_open_g = 0:0.5:360;
-%     if override_togs
-%         theta2cs_closed_g = custom_input;
-%         theta2cs_open_g = custom_input;
-%     end
+    theta2cs_g = 0:0.5:360; %there are no toggle positions for cs
 end
 
 theta3cs_closed_g = asind((a_cs*sind(theta2cs_closed_g)-c_cs)/b_cs);
