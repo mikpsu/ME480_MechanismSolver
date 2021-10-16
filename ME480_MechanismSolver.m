@@ -428,9 +428,12 @@ end
 %% Velocity Analysis
 omega_3 = a*omega_2/b .* (sind(theta4g-theta2g)./sind(theta3g-...
     theta4g));
-
 omega_4 = a*omega_2/c .* (sind(-theta3g+theta2g)./sind(theta4g-...
     theta3g));
+
+% filter out very high velocities
+omega_3(abs(theta3g-theta4g) < 0.1) = NaN;
+omega_4(abs(theta3g-theta4g) < 0.1) = NaN;
 
 % velocity of A (crank end), is tangential to crank arc
 VA_g = a*omega_2*(-sind(theta2g)+1i*cosd(theta2g));
