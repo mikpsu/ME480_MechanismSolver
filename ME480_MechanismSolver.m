@@ -54,7 +54,7 @@ theta3_cs_fig_g = 315; %approximate theta 3 of crank slider.
                     %for determining configuration of figure
                     %Global system. Must be between 0-360 deg.
                     
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%No edits must be made below this header%    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _  _     ____          _____    _____ _____ _   _ 
 %  | || |   |  _ \   /\   |  __ \  |  __ \_   _| \ | |
