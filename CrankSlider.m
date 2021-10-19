@@ -15,10 +15,10 @@ theta1 = (0); %ccw angle from local +x axis to global X axis
      
 % point of interest P on linkage
 P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
+p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
 delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
-
+                
 % position of mechanism shown in figure
 theta2_fig_g = 100; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
@@ -30,6 +30,21 @@ omega_2 = 100*2*pi/60; %input velocity
 %Custom input range for crank in local coordinates
 override_togs = 1; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
+
+%% Crank-Slider Mechanism Parameters
+% link lengths
+a_cs = c; %crank-slider crank
+b_cs = 5.40; %crank-slider coupler
+c_cs = 0; %crank-slider offset: normal distance from O2_cs to slider dof
+
+% define crank of crank-slider
+fourbarlink_equivalent = 'c';
+connection = 'p'; %end point of crank-slider crank link. e.g. if 4bar
+                %precedes crank-slider and 4bar output is the cs input,'c'
+
+theta3_cs_fig_g = 315; %approximate theta 3 of crank slider. 
+                    %for determining configuration of figure
+                    %Global system. Must be between 0-360 deg.
                     
 %No edits must be made below this header%    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
