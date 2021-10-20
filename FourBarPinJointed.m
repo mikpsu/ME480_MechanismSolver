@@ -4,33 +4,38 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-a = 0.785; %input (crank) length
-b = 0.356; %coupler length
-c = 0.95; %output length
-d = 0.544; %ground length
+a = 3; %input (crank) length
+b = 10; %coupler length
+c = 6; %output length
+d = sqrt(1.5^2+12^2); %ground length
+units = 'in'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = (0); %ccw angle from local +x axis to global X axis
-     %local +x points from crank ground to ouput ground (O2 to O4)
+theta1 = atand(12/1.5); %ccw angle from local +x axis to global X axis
+     %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
-P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
+P_link = 'c'; %define which link the point is on: 'a' 'b' or 'c'
 delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
+p = c; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 100; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 130; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta2_fig_l = theta2_fig_g + theta1;                    
-theta3_fig_g = 20; %approximate theta 3 for determining configuration of 
-                    %figure. Global system. Must be between 0-360 deg.
-omega_2 = 100*2*pi/60; %input velocity
+theta3_fig_g = 270; %approximate theta 3 for determining configuration of 
+                    %figure. Global system. Must be between 0-360 deg. 
+theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
+
+% given speed and acceleration of crank
+omega2 = 120*pi/30; %input velocity
+alpha2 = 0;
 
 %Custom input range for crank in local coordinates
-override_togs = 1; %change to 1 to use custom range
+override_togs = 0; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
-                    
+
+       
 %No edits must be made below this header%    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _  _     ____          _____    _____ _____ _   _ 
@@ -58,8 +63,8 @@ Twotog = 0;
 Notog = 0;
 
 % Test for NaN case
-tog1_inards = (a^2+d^2-b^2-c^2)/(2*a*d)+b*c/(a*d);
-tog2_inards = (a^2+d^2-b^2-c^2)/(2*a*d)-b*c/(a*d);
+tog1_inards = (a.^2+d.^2-b.^2-c.^2)./(2*a*d)+b*c./(a*d);
+tog2_inards = (a.^2+d.^2-b.^2-c.^2)./(2*a*d)-b*c./(a*d);
 
 % Calculate the two toggle positions, in local coordinates
 if xor((abs(tog1_inards) > 1), (abs(tog2_inards) > 1))
@@ -122,10 +127,10 @@ else
         % direction irrelevant bc range does not cross x axis
         theta2l = min(togs_l):0.5:max(togs_l); %local
 
-    elseif grash
+    elseif Notog
         %case for no toggle points. Input angle theta 2 can go 360 deg
-        theta2l = 0:0.5:360;
-        theta2g = theta2l;
+        theta2g = 0:0.5:360;
+        theta2l = theta2g + theta1;
     end
 end
 
@@ -139,28 +144,28 @@ end
 theta2l = theta2l + 360.*(theta2l < 0);
 
 %% Calculated Parameters
-k1 = d/a;
-k2 = d/c;
-k3 = (a^2-b^2+c^2+d^2)/(2*a*c);
-k4 = d/b;
-k5 = (c^2-d^2-a^2-b^2)/(2*a*b);
+k1 = d./a;
+k2 = d./c;
+k3 = (a.^2-b.^2+c.^2+d.^2)./(2*a*c);
+k4 = d./b;
+k5 = (c.^2-d.^2-a.^2-b.^2)./(2*a*b);
 
-A = cosd(theta2l)-k1-k2*cosd(theta2l)+k3;
-B = -2*sind(theta2l);
-C = k1-(k2+1)*cosd(theta2l)+k3;
-D = cosd(theta2l)-k1+k4*cosd(theta2l)+k5;
-E = -2*sind(theta2l);
-F = k1 + (k4-1)*cosd(theta2l)+k5;
+A = cosd(theta2l)-k1-k2.*cosd(theta2l)+k3;
+B = -2.*sind(theta2l);
+C = k1-(k2+1).*cosd(theta2l)+k3;
+D = cosd(theta2l)-k1+k4.*cosd(theta2l)+k5;
+E = -2.*sind(theta2l);
+F = k1 + (k4-1).*cosd(theta2l)+k5;
 
 %% Output Angle Theta 4
 
 %OPEN CONFIGURATION
 %calculate the open configuration output angle. "Minus" eq
 %find and remove imaginary input arguments
-Q_m4 = (-B-sqrt(B.^2-4*A.*C));
+Q_m4 = (-B-sqrt(B.^2-4.*A.*C));
 Q_m4(imag(Q_m4) ~= 0) = NaN;
 %calculate the angle
-theta4open_l = (2*atan2d(Q_m4, 2*A)); %local,
+theta4open_l = (2.*atan2d(Q_m4, 2.*A)); %local,
 %convert to global. We only report output angles in global.
 theta4open_g = theta4open_l - theta1;
 %find and correct large and/or negative angles
@@ -171,10 +176,10 @@ end
 %CLOSED CONFIGURATION
 %calculate the closed configuration output angle. "Plus" eq
 %find and remove imaginary input arguments
-Q_p4 = (-B+sqrt(B.^2-4*A.*C));
+Q_p4 = (-B+sqrt(B.^2-4.*A.*C));
 Q_p4(imag(Q_p4) ~= 0) = NaN;
 %calculate the angle
-theta4closed_l = (2*atan2d(Q_p4,2*A));%local,
+theta4closed_l = (2.*atan2d(Q_p4,2.*A));%local,
 %convert to global
 theta4closed_g = theta4closed_l - theta1;
 %find and correct large and/or negative angles
@@ -184,18 +189,19 @@ end
 
 %DEPICTED CONFIGURATION
 %calculate D,E,F for the current position
-A_fig = cosd(theta2_fig_l)-k1-k2*cosd(theta2_fig_l)+k3;
-B_fig = -2*sind(theta2_fig_l);
-C_fig = k1-(k2+1)*cosd(theta2_fig_l)+k3;
+A_fig = cosd(theta2_fig_l)-k1-k2.*cosd(theta2_fig_l)+k3;
+B_fig = -2.*sind(theta2_fig_l);
+C_fig = k1-(k2+1).*cosd(theta2_fig_l)+k3;
+
 %calculate closed theta 3 for current position
-theta4closed_fig_l = (2*atan2d(-B_fig+sqrt(B_fig.^2-4*A_fig.*C_fig),...
-                                    2*A_fig)); %local, plus
+theta4closed_fig_l = (2.*atan2d(-B_fig+sqrt(B_fig.^2-4.*A_fig.*C_fig),...
+                                    2.*A_fig)); %local, plus
 %convert to global                  
 theta4closed_fig_g = theta4closed_fig_l - theta1; 
 
 %calculate open theta 3 for current position
-theta4open_fig_l = 2*atan2d(-B_fig-sqrt(B_fig.^2-4*A_fig.*C_fig),...
-                                    2*A_fig); %local, minus
+theta4open_fig_l = 2.*atan2d(-B_fig-sqrt(B_fig.^2-4.*A_fig.*C_fig),...
+                                    2.*A_fig); %local, minus
 %convert to global                    
 theta4open_fig_g = theta4open_fig_l - theta1;
 
@@ -210,10 +216,10 @@ end
 %OPEN CONFIGURATION
 %calculate the open configuration coupler angle. "Minus case"
 %find and remove imaginary input arguments
-Q_m3 = (-E-sqrt(E.^2-4*D.*F));
+Q_m3 = (-E-sqrt(E.^2-4.*D.*F));
 Q_m3(imag(Q_m3) ~= 0) = NaN;
 %calculate the angle
-theta3open_l = (2*atan2d(Q_m3,2*D));%local, 
+theta3open_l = (2.*atan2d(Q_m3,2.*D));%local, 
 %convert to global
 theta3open_g = theta3open_l - theta1;
 %find and correct negative angles
@@ -224,10 +230,10 @@ end
 %CLOSED CONFIGURATION
 %calculate the closed configuration coupler angle. "Plus case:"
 %find and remove imaginary input arguments
-Q_p3 = (-E+sqrt(E.^2-4*D.*F));
+Q_p3 = (-E+sqrt(E.^2-4.*D.*F));
 Q_p3(imag(Q_p3) ~= 0) = NaN;
 %calculate the angle
-theta3closed_l = (2*atan2d(Q_p3, 2*D)); %local, plus
+theta3closed_l = (2.*atan2d(Q_p3, 2.*D)); %local, plus
 %convert to global
 theta3closed_g = theta3closed_l - theta1; %
 for j = 1:2
@@ -237,18 +243,19 @@ end
 %DEPICTED CONFIGURATION
 %calculate current coupler angle in given figure based on estimated theta2
 %calculate D,E,F for the current position
-D_fig = cosd(theta2_fig_l)-k1+k4*cosd(theta2_fig_l)+k5;
-E_fig = -2*sind(theta2_fig_l);
-F_fig = k1 + (k4-1)*cosd(theta2_fig_l)+k5;
+D_fig = cosd(theta2_fig_l)-k1+k4.*cosd(theta2_fig_l)+k5;
+E_fig = -2.*sind(theta2_fig_l);
+F_fig = k1 + (k4-1).*cosd(theta2_fig_l)+k5;
+
 %calculate closed theta 3 for current position
-theta3closed_fig_l = (2*atan2d((-E_fig+sqrt(E_fig.^2-4*D_fig.*F_fig)),...
-                      2*D_fig)); %local, plus
+theta3closed_fig_l = (2.*atan2d((-E_fig+sqrt(E_fig.^2-4.*D_fig.*F_fig)),...
+                      2.*D_fig)); %local, plus
 %convert to global                  
 theta3closed_fig_g = theta3closed_fig_l - theta1; 
 
 %calculate open theta 3 for current position
-theta3open_fig_l = (2*atan2d((-E_fig-sqrt(E_fig.^2-4*D_fig.*F_fig)),...
-                        2*D_fig));%local, 
+theta3open_fig_l = (2.*atan2d((-E_fig-sqrt(E_fig.^2-4.*D_fig.*F_fig)),...
+                        2.*D_fig));%local, 
 %convert to global                    
 theta3open_fig_g = theta3open_fig_l - theta1;
 
@@ -293,20 +300,10 @@ for k = 1:2
     theta4current_fig_g = theta4current_fig_g - 360.*(theta4current_fig_g > 360);
 end
 
-%% Print Relevant Values
-if length(theta2g) == 1
-    fprintf('For Theta2g = %.3f:\nTheta3g = %.3f\n',theta2g, theta3g)
-    fprintf('Theta4g = %.3f\n\n', theta4g)
-    fprintf('Angles shown in the figure:\nTheta2g_fig = %.3f:\n',...
-        theta2_fig_g)
-    fprintf('Theta3g_fig = %.3f\nTheta4g_fig = %.3f\n\n', ...
-        theta3current_fig_g, theta4current_fig_g)
-end
-
 %% Plot Coupler and Output Angles
 figure(1)
 hold on
-plot(theta2g, theta4g,'.')
+plot((theta2g), theta4g,'.')
 xlabel('Input Angle (\theta_2) [deg]')
 ylabel('Output Angle (\theta_4) [deg]')
 plot(theta2_fig_g, theta4current_fig_g, 'x','linewidth',3)
@@ -337,24 +334,24 @@ if P_link == 'a' %point P is on link a (input). Pinned at O2
     thetaP_g = theta2g + delta;
     
     % P-> = AP-> relative to O2
-    P = p*cosd(thetaP_g) + 1i*p*sind(thetaP_g);  
+    P = p.*cosd(thetaP_g) + 1i.*p.*sind(thetaP_g);  
     
     %current position of point P
     thetaPcurrent_g = theta2_fig_g + delta;
-    P_current = p*cosd(thetaPcurrent_g) + 1i*p*sind(thetaPcurrent_g);  
+    P_current = p.*cosd(thetaPcurrent_g) + 1i.*p.*sind(thetaPcurrent_g);  
     
 elseif P_link == 'b' %point P is on link b (coupler). Pinned at A
     %find angle of AP
     thetaP_g = theta3g + delta;
     
     %P-> = AB-> + BP-> relative to O2
-    P = a*cosd(theta2g) + p*cosd(thetaP_g) + ...
-        1i*(a*sind(theta2g) + p*sind(thetaP_g));
+    P = a.*cosd(theta2g) + p.*cosd(thetaP_g) + ...
+        1i.*(a.*sind(theta2g) + p.*sind(thetaP_g));
     
     %current position of point P
     thetaPcurrent_g = theta3current_fig_g + delta;
-    P_current = a*cosd(theta2_fig_g) + p*cosd(thetaPcurrent_g) + ...
-        1i*(a*sind(theta2_fig_g) + p*sind(thetaPcurrent_g));
+    P_current = a.*cosd(theta2_fig_g) + p.*cosd(thetaPcurrent_g) + ...
+        1i.*(a.*sind(theta2_fig_g) + p.*sind(thetaPcurrent_g));
     
 elseif P_link == 'c' %point P is on link c (output)
     %find angle O4P
@@ -362,11 +359,11 @@ elseif P_link == 'c' %point P is on link c (output)
                                        
     
     % P-> = O2P-> relative to O4
-    P = p*cosd((thetaP_g)) + 1i*p*sind((thetaP_g));
+    P = p.*cosd((thetaP_g)) + 1i.*p.*sind((thetaP_g));
 
     %current position of point P relative to O4
     thetaPcurrent_g = theta4current_fig_g + delta;
-    P_current = p*cosd(thetaPcurrent_g) + 1i*p*sind(thetaPcurrent_g); 
+    P_current = p.*cosd(thetaPcurrent_g) + 1i.*p.*sind(thetaPcurrent_g); 
     
 else %point P link incorrectly defined
     disp('Incorrect definition of link for point P. Check  var ''P_link''')
@@ -380,10 +377,10 @@ Py_current = imag(P_current);
 %% Plot Position on Coupler
 
 figure(4)
-daspect([1 1 1]);
 plot(Px, Py, '.')
-xlabel('X Position [m]')
-ylabel('Y Position [m]')
+xlabel({"X Position [" + units + "["})
+ylabel("Y Position [" + units + "]")
+daspect([1 1 1]);
 
 if open
     title('Position of Point P (Open)')
@@ -398,32 +395,32 @@ plot(Px_current, Py_current, 'x','linewidth',2)
 %plot and label the origin
 plot(0,0,'ks','linewidth', 4)
 if P_link == 'b' || P_link == 'a' %O2 is at the origin
-    text(.05*range([Px]),0, {'O_2'})
+    text(.05.*range([Px]),0, {'O_2'})
 elseif P_link == 'c' %O4 is at origin
-    text(.05*range([Px]),0, {'O_4'})
+    text(.05.*range([Px]),0, {'O_4'})
 end
 
 %% Velocity Analysis
-omega_3 = a*omega_2/b .* (sind(theta4g-theta2g)./sind(theta3g-...
+omega3 = a.*omega2./b .* (sind(theta4g-theta2g)./sind(theta3g-...
     theta4g));
-omega_4 = a*omega_2/c .* (sind(-theta3g+theta2g)./sind(theta4g-...
+omega4 = a.*omega2./c .* (sind(-theta3g+theta2g)./sind(theta4g-...
     theta3g));
 
 % filter out very high velocities
-omega_3(abs(theta3g-theta4g) < 0.1) = NaN;
-omega_4(abs(theta3g-theta4g) < 0.1) = NaN;
+omega3(abs(theta3g-theta4g) < 0.1) = NaN;
+omega4(abs(theta3g-theta4g) < 0.1) = NaN;
 
 % velocity of A (crank end), is tangential to crank arc
-VA_g = a*omega_2*(-sind(theta2g)+1i*cosd(theta2g));
+VA_g = a.*omega2.*(-sind(theta2g)+1i.*cosd(theta2g));
 
 % velocity of B relative to A
-VBA_g = b*omega_3 .*(-sind(theta3g)+1i*cosd(theta3g));
+VBA_g = b.*omega3 .*(-sind(theta3g)+1i.*cosd(theta3g));
 
 % velocity of B, is tangential to output arc
-VB_g = c*omega_4 .*(-sind(theta4g)+1i.*cosd(theta4g));
+VB_g = c.*omega4 .*(-sind(theta4g)+1i.*cosd(theta4g));
 
 % velocity of P relative to A
-VPA_g = p*omega_3 .* -sind(theta3g + delta) + 1i*p.*omega_3 ...
+VPA_g = p.*omega3 .* -sind(theta3g + delta) + 1i.*p.*omega3 ...
     .* cosd(theta3g+delta);
 % velocity of P
 VP_g = VA_g + VPA_g;
@@ -437,10 +434,46 @@ VP_mag = abs(VP_g);
 figure(5)
 plot(theta2g, VP_mag, '.');
 xlabel('Input Angle (\theta_2) [deg]')
-ylabel('|V_P| [m/s]')
+ylabel("|V_P| [" + units +"/s]")
 
 if open
     title('Point P Velocity vs Input Angle (Open)')
 else
     title('Point P Velocity vs Input Angle (Closed)')
 end
+
+%% Acceleration Analysis
+A_a = c*sind(theta4g);
+B_a = b*sind(theta3g);
+C_a = a*alpha2.*sind(theta2g)+a*omega2.^2.*cosd(theta2g)+b*omega3.^2 ...
+    .*cosd(theta3g) - c*omega4.^2 .*cosd(theta4g);
+D_a = c*cosd(theta4g);
+E_a = b*cosd(theta3g);
+F_a = a*alpha2.*cosd(theta2g)- a*omega2.^2.*sind(theta2g)-b*omega3.^2 ...
+    .*sind(theta3g) + c*omega4.^2 .*sind(theta4g);
+
+alpha3 = (C_a.*D_a - A_a.*F_a)./(A_a.*E_a - B_a.*D_a);
+alpha4 = (C_a.*E_a - B_a.*F_a)./(A_a.*E_a - B_a.*D_a);
+
+%% Print Relevant Values
+%print values only if evaluating for one theta 2 input
+if length(theta2g) == 1
+    %define output vectors
+    links = ["Crank (a)", "Coupler (b)", "Output (c)"]';
+    thetas = [theta2g, theta3g, theta4g]';
+    omegas = [omega2, omega3, omega4]';
+    alphas = [alpha2 , alpha3, alpha4]';
+    %create and display the table
+    mechanism_state = table;
+    mechanism_state.Link = links;
+    mechanism_state.Angle = thetas;
+    mechanism_state.Speed = omegas;
+    mechanism_state.Acceleration = alphas;
+    mechanism_state.Properties.VariableNames{2} = 'Angle [deg]';
+    mechanism_state.Properties.VariableNames{3} = 'Speed [rad/s]';
+    mechanism_state.Properties.VariableNames{4} = 'Acceleration [rad/s^2]';
+    disp(mechanism_state)
+end
+
+%% troubleshooting inputs
+
