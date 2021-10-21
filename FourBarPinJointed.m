@@ -474,6 +474,3 @@ if length(theta2g) == 1
     mechanism_state.Properties.VariableNames{4} = 'Acceleration [rad/s^2]';
     disp(mechanism_state)
 end
-
-%% troubleshooting inputs
-
