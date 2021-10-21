@@ -18,6 +18,7 @@ sc = 1; % >0 if slider-crank problem
 theta2 = 20; %input crank angle
 omega2 = 100*2*pi/60; %input crank velocity
 alpha2 = 0; %input crank acceleration
+point_evaluation = 0% %>0 evaluate mechanism at theta2 rather than 360 deg
 
 % slider-crank inputs
 d = -28;
@@ -68,8 +69,10 @@ if cs
         d = a*cosd(theta2)-b*cosd(theta3);
     end
     
-    % define theta2 as a full rotation
-    theta2 = 0:0.5:360;
+    if not(point_analysis)
+        % define theta2 as a full rotation
+        theta2 = 0:0.5:360;
+    end
 end
 
 %% Slider Crank Position Analysis
@@ -127,7 +130,8 @@ end
 
 %% Velocity Analysis
 if sc
-    omega2 = d_dot.*cosd(theta3) ./ (a*(cosd(theta2).*sind(theta3)-sind(theta2).*cosd(theta3)));
+    omega2 = d_dot.*cosd(theta3) ./ (a*(cosd(theta2).*sind(theta3) ...
+        -sind(theta2).*cosd(theta3)));
 end
 omega3= a/b .* cosd(theta2)./cosd(theta3) .* omega2;
 d_dot = -a*omega2.*sind(theta2)+b*omega3.*sind(theta3);
