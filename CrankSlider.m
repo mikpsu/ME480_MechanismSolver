@@ -2,47 +2,33 @@
 %Author: Michael Pagan
 clc, clear, close all
 
-%% 4 Bar Pin Joint Mechanism Parameters
-% Link lengths
-a = 0.785; %input (crank) length
-b = 0.356; %coupler length
-c = 0.95; %output length
-d = 0.544; %ground length
-
-% transform between local and global coordinates
-theta1 = (0); %ccw angle from local +x axis to global X axis
-     %local +x points from crank ground to ouput ground (O2 to O4)
-     
-% point of interest P on linkage
-P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
-p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
-delta = 0; %fixed angle between selected link vector and point vector on 
-                %link. e.g. angle between AB and AP. cw = negative
-                
-% position of mechanism shown in figure
-theta2_fig_g = 100; %approximate theta 2 for determining configuration of 
-                    %figure. Global system. Must be between 0-360 deg.
-theta2_fig_l = theta2_fig_g + theta1;                    
-theta3_fig_g = 20; %approximate theta 3 for determining configuration of 
-                    %figure. Global system. Must be between 0-360 deg.
-omega_2 = 100*2*pi/60; %input velocity
-
-%Custom input range for crank in local coordinates
-override_togs = 1; %change to 1 to use custom range
-custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
-
-%% Crank-Slider Mechanism Parameters
+%% Crank-Slider OR Slider-Crank Mechanism Parameters
 % link lengths
-a_cs = c; %crank-slider crank
-b_cs = 5.40; %crank-slider coupler
-c_cs = 0; %crank-slider offset: normal distance from O2_cs to slider dof
+a = 10.6; %crank-slider crank
+b = 22.7; %crank-slider coupler
+c = 0; %crank-slider offset: normal distance from local axis to global axis
+           % the slider moves along the local axis
+units = "cm"; %units of above link lengths
 
-% define crank of crank-slider
-fourbarlink_equivalent = 'c';
-connection = 'p'; %end point of crank-slider crank link. e.g. if 4bar
-                %precedes crank-slider and 4bar output is the cs input,'c'
+% define problem type: must choose one
+cs = 0; % >0 if crank-slider problem
+sc = 1; % >0 if slider-crank problem
+                
+% crank-slider inputs
+theta2 = 20; %input crank angle
+omega2 = 100*2*pi/60; %input crank velocity
+alpha2 = 0; %input crank acceleration
+point_evaluation = 0% %>0 evaluate mechanism at theta2 rather than 360 deg
 
-theta3_cs_fig_g = 315; %approximate theta 3 of crank slider. 
+% slider-crank inputs
+d = -28;
+d_dot = 10; %input slider velocity
+d_ddot = 0; %input slider acceleration
+
+% depiction in figure
+theta2_fig = 130; %approximate theta 2 for determining configuration of 
+                    %figure. Global system. Must be between 0-360 deg.                  
+theta3_fig = 20; %approximate theta 3 of crank slider. 
                     %for determining configuration of figure
                     %Global system. Must be between 0-360 deg.
                     
@@ -55,63 +41,161 @@ theta3_cs_fig_g = 315; %approximate theta 3 of crank slider.
 %  | |____| | \ \  / ____ \| |\  | . \ ____) | |____ _| |_| |__| | |____ 
 %   \_____|_|  \_\/_/    \_\_| \_|_|\_\_____/|______|_____|_____/|______|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                                                                       
-%% Determine Configuration of Crank-Slider Mechanism
+%% Crank Slider Position Analysis
+if cs
+    %Determine configuration of given figure
+    theta3_closed_fig = asind((a*sind(theta2_fig)-c)/b);
+    theta3_open_fig = asind(-((a*sind(theta2_fig)-c)/b))+180; 
 
-% find theta3cs open and closed for theta2cs_g, compare to theta3_cs_fig_g
-% using absolute method again.
+    if abs(theta3_open_fig-theta3_fig) > abs(theta3_closed_fig-theta3_fig)
+        disp('FIGURE DEPICTS THE CLOSED CONFIGURATION')
+        % flags for open/closed
+        closed = 1;
+        open = 0;
 
+        theta3current_fig = theta3_closed_fig;
+        
+        theta3 = asind((a*sind(theta2)-c)/b);
+        d = a*cosd(theta2)-b*cosd(theta3);
+    else 
+        disp('FIGURE DEPICTS THE OPEN CONFIGURATION')
+        % flags for open/closed
+        closed = 0;
+        open = 1;
 
-
-
-%% Velocity Analysis
-theta2cs_g = thetaP_g;
-% theta4cs_g, theta3cs_g
-
-
-
-% assign crank-slider input as 4bar output if applicable
-if fourbar_to_crankslider
-    theta2cs_g = thetaP_g;
-else %crank slider input
-    theta2cs_g = 0:0.5:360; %there are no toggle positions for cs
+        theta3current_fig = theta3_closed_fig; 
+        
+        theta3 = asind(-((a*sind(theta2)-c)/b))+180;
+        d = a*cosd(theta2)-b*cosd(theta3);
+    end
+    
+    if not(point_analysis)
+        % define theta2 as a full rotation
+        theta2 = 0:0.5:360;
+    end
 end
 
-theta3cs_closed_g = asind((a_cs*sind(theta2cs_closed_g)-c_cs)/b_cs);
-d_cs_closed_g = a_cs*cosd(theta2cs_closed_g)-b_cs*cosd(theta3cs_closed_g);
+%% Slider Crank Position Analysis
+if sc
+    % calcualte theta2
+    K1 = a^2-b^2+c^2+d^2;
+    K2 = -2*a*c;
+    K3 = -2*a*d;
+    A = K1-K3;
+    B = 2*K2;
+    C = K1+K3;
+    
+    theta2_branch(1) = 2*atan2d(-B+sqrt(B^2-4*A*C), 2*A); % branch 1
+    theta2_branch(2) = 2*atan2d(-B-sqrt(B^2-4*A*C), 2*A); % branch 2
+    % Make all negative input angles positive
+    theta2_branch = theta2_branch + 360.*(theta2_branch < 0);
+    
+    % determine which branch we want to analyze
+    if abs(theta2_fig-theta2_branch(1)) > abs(theta2_fig-theta2_branch(2))
+        disp('FIGURE DEPICTS BRANCH 2')
+        % flags for branch 1 or 2
+        branch1 = 0;
+        branch2 = 1;
 
-theta3cs_open_g = asind(-(a_cs*sind(theta2cs_open_g)-c_cs)/b_cs)+180;
-d_cs_open_g = a_cs*cosd(theta2cs_open_g)-b_cs*cosd(theta3cs_open_g);
+        theta2 = theta2_branch(2);
+    else 
+        disp('FIGURE DEPICTS BRANCH 1')
+        % flags for branch 1 or 2
+        branch1 = 1;
+        branch2 = 0;
 
-%slider position must be >0 for this mechanism
-d_cs_open_g(d_cs_open_g<0) = NaN;
-d_cs_closed_g(d_cs_closed_g<0) = NaN;
+        theta2 = theta2_branch(1);
+    end
+    
+    %Determine configuration of given figure
+    theta3_closed = asind((a*sind(theta2)-c)/b);
+    theta3_open = asind(-((a*sind(theta2)-c)/b))+180; 
+    
+    if abs(theta3_open-theta3_fig) > abs(theta3_closed-theta3_fig)
+        disp('FIGURE DEPICTS THE CLOSED CONFIGURATION')
+        % flags for open/closed
+        closed = 1;
+        open = 0;
+
+        theta3 = theta3_closed;
+    else 
+        disp('FIGURE DEPICTS THE OPEN CONFIGURATION')
+        % flags for open/closed
+        closed = 0;
+        open = 1;
+
+        theta3 = theta3_open; 
+    end
+end
+
+%% Velocity Analysis
+if sc
+    omega2 = d_dot.*cosd(theta3) ./ (a*(cosd(theta2).*sind(theta3) ...
+        -sind(theta2).*cosd(theta3)));
+end
+omega3= a/b .* cosd(theta2)./cosd(theta3) .* omega2;
+d_dot = -a*omega2.*sind(theta2)+b*omega3.*sind(theta3);
+
+%% Acceleration Analysis
+if sc
+    alpha2 = (a*omega2.^2*(cosd(theta2).*cosd(theta3)+sind(theta2) ...
+        .*sind(theta3)) - b*omega3.^2 + d_ddot*cosd(theta3)) ./ ...
+        (a*(cosd(theta2).*sind(theta3)-sind(theta2).*cosd(theta3)));
+    
+    alpha3 = (a.*alpha2.*cosd(theta2)-a.*omega2.^2.*sind(theta2)+ ...
+        b.*omega3.^2.*sind(theta3)) ./ b.*cosd(theta3);
+end
+   
+if cs
+    alpha3 = (a*alpha2*cosd(theta2)-a*omega2.^2.*sind(theta2)+ ...
+        b*omega3.^2.*sind(theta3)) ./ b*cosd(theta3);
+
+    d_ddot = -a*alpha2*sind(theta2) - a*omega2.^2.*cosd(theta2) + ...
+        b*alpha3*sind(theta3) + b*omega3.^2.*cosd(theta3);
+end
+
+%% Plot Position, Velocity, Acceleration
 %Plot the position of the slider
-figure(6)
-plot(d_cs_open_g, zeros(length(d_cs_open_g)),'.')
+figure(1)
+plot(d, c+zeros(length(d)),'.')
 title('Slider Position')
-xlabel('X Position [units]')
-ylabel('Y Position [units]')
+xlabel("X Position [" + units + "]")
+ylabel("Y Position ["+units+"]") 
 hold on
 %Assuming pinned joint of crank is origin
 plot(0,0,'ks','linewidth', 5)
 daspect([1 1 1]);
-text(.05*range(d_cs_open_g),0, {'O_2'})
+text(.05*range(d),0, {'O_2'})
 
-%% Velocity of slider
-omega2_cs = omega_4open;
-
-omega3_cs_open = a_cs/b_cs * cosd(theta2cs_open_g)/cosd(theta3cs_open_g)...
-    *omega2_cs;
-omega3_cs_closed = a_cs/b_cs * cosd(theta2cs_closed_g)/cosd(theta3cs_closed_g)...
-    *omega2_cs;
-
-d_cs_dot_open = -a_cs*omega2_cs.*sind(theta2cs_open_g)+b_cs*omega3_cs_open...
-    .*sind(theta3cs_open_g);
-d_cs_dot_closed = -a_cs*omega2_cs.*sind(theta2cs_closed_g)+b_cs*omega3_cs_closed...
-    .*sind(theta3cs_closed_g);
-
-figure(7)
-plot(theta2g, d_cs_dot_open, '.');
+% velocity of the slider
+figure(2)
+plot(theta2, d_dot, '.');
 title('Slider Velocity vs Input Angle (Global)')
 xlabel('Input Angle (\theta_2) [deg]')
-ylabel('V_C [units/s]')
+ylabel("V_d ["+units+"/s]")
+
+% velocity of the crank
+
+% velocity of the coupler
+%% Print Relevant Values
+%print values only if evaluating for one theta 2 input
+if length(theta2) == 1
+    %define output vectors
+    links = ["Crank (a)", "Coupler (b)", "Slider (d)"]';
+    thetas = [theta2, theta3, d]';
+    omegas = [omega2, omega3, d_dot]';
+    alphas = [alpha2 , alpha3, d_ddot]';
+    units = ["rad", "rad", "length"]';
+    %create and display the table
+    mechanism_state = table;
+    mechanism_state.Link = links;
+    mechanism_state.Angle = thetas;
+    mechanism_state.Speed = omegas;
+    mechanism_state.Acceleration = alphas;
+    mechanism_state.Units = units;
+    mechanism_state.Properties.VariableNames{2} = 'Position';
+    mechanism_state.Properties.VariableNames{3} = 'Speed';
+    mechanism_state.Properties.VariableNames{4} = 'Acceleration';
+    mechanism_state.Properties.VariableNames{5} = 'Units';
+    disp(mechanism_state)
+end
