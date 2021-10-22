@@ -6,19 +6,21 @@ clc, clear, close all
 % link lengths
 a = 10.6; %crank-slider crank
 b = 22.7; %crank-slider coupler
-c = 0; %crank-slider offset: normal distance from local axis to global axis
+c = 0; %crank-slider offset: normal distance from local axis to global 
            % the slider moves along the local axis
 units = "cm"; %units of above link lengths
+
+theta1 = 0; %ccw angle from slider axis and Global X ***NOT SET UP YET***
 
 % define problem type: must choose one
 cs = 0; % >0 if crank-slider problem
 sc = 1; % >0 if slider-crank problem
                 
 % crank-slider inputs
-theta2 = 20; %input crank angle
-omega2 = 100*2*pi/60; %input crank velocity
-alpha2 = 0; %input crank acceleration
-point_evaluation = 0% %>0 evaluate mechanism at theta2 rather than 360 deg
+theta2 = 60; %input crank angle
+omega2 = -30; %input crank velocity [rad/s]
+alpha2 = 20; %input crank acceleration [rad/s^2]
+point_analysis = 1;% %>0 evaluate mechanism at theta2 rather than 360 deg
 
 % slider-crank inputs
 d = -28;
@@ -26,7 +28,7 @@ d_dot = 10; %input slider velocity
 d_ddot = 0; %input slider acceleration
 
 % depiction in figure
-theta2_fig = 130; %approximate theta 2 for determining configuration of 
+theta2_fig = 120; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.                  
 theta3_fig = 20; %approximate theta 3 of crank slider. 
                     %for determining configuration of figure
@@ -143,12 +145,13 @@ if sc
         (a*(cosd(theta2).*sind(theta3)-sind(theta2).*cosd(theta3)));
     
     alpha3 = (a.*alpha2.*cosd(theta2)-a.*omega2.^2.*sind(theta2)+ ...
-        b.*omega3.^2.*sind(theta3)) ./ b.*cosd(theta3);
+        b.*omega3.^2.*sind(theta3)) ./ (b.*cosd(theta3));
 end
    
 if cs
     alpha3 = (a*alpha2*cosd(theta2)-a*omega2.^2.*sind(theta2)+ ...
-        b*omega3.^2.*sind(theta3)) ./ b*cosd(theta3);
+                        b*omega3.^2.*sind(theta3)) ... 
+                            ./ (b*cosd(theta3));
 
     d_ddot = -a*alpha2*sind(theta2) - a*omega2.^2.*cosd(theta2) + ...
         b*alpha3*sind(theta3) + b*omega3.^2.*cosd(theta3);

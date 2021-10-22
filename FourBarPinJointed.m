@@ -4,37 +4,37 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-a = 3; %input (crank) length
-b = 10; %coupler length
-c = 6; %output length
-d = sqrt(1.5^2+12^2); %ground length
+Lengths = [2,7,9,6]; %a,b,c,d 
+a = Lengths(1); %input (crank) length
+b = Lengths(2); %coupler length
+c = Lengths(3); %output length
+d = Lengths(4); %ground length
 units = 'in'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = atand(12/1.5); %ccw angle from local +x axis to global X axis
+theta1 = 0; %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
-P_link = 'c'; %define which link the point is on: 'a' 'b' or 'c'
+P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
 delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = c; %distance from link pin joint to desired point P (e.g. AP)
+p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 130; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 30; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta3_fig_g = 270; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 90; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg. 
 theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
 
 % given speed and acceleration of crank
-omega2 = 120*pi/30; %input velocity
-alpha2 = 0;
+omega2 = 10; %input velocity [rad/s]
+alpha2 = 0; %input acceleration [rad/s^2]
 
 %Custom input range for crank in local coordinates
-override_togs = 0; %change to 1 to use custom range
+override_togs = 1; %change to 1 to use custom range
 custom_input = theta2_fig_l; %specify custom range LOCAL coordinates
-
        
 %No edits must be made below this header%    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
