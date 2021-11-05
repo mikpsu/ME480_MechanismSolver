@@ -4,32 +4,34 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-Lengths = [2,7,9,6]; %a,b,c,d 
+Lengths = [1, 1.1, 1.25, sqrt(1.2^2+.75^2)]; %a,b,c,d 
 a = Lengths(1); %input (crank) length
 b = Lengths(2); %coupler length
 c = Lengths(3); %output length
 d = Lengths(4); %ground length
-units = 'in'; %units of above link lengths
+units = 'cm'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = 0; %ccw angle from local +x axis to global X axis
+theta1 = 180+atand(1.2/0.75); %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
 P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
-delta = 0; %fixed angle between selected link vector and point vector on 
+DF = 1.35;
+EF = sqrt(DF^2+b^2-2*DF*b*cosd(115));
+delta = -asind((1.35/EF)*sind(115)); %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = 1.09; %distance from link pin joint to desired point P (e.g. AP)
+p = EF; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 30; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 5; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta3_fig_g = 90; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 110; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg. 
 theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
 
 % given speed and acceleration of crank
-omega2 = 10; %input velocity [rad/s]
+omega2 = 100*pi/30; %input velocity [rad/s]
 alpha2 = 0; %input acceleration [rad/s^2]
 
 %Custom input range for crank in local coordinates
@@ -455,6 +457,36 @@ F_a = a*alpha2.*cosd(theta2g)- a*omega2.^2.*sind(theta2g)-b*omega3.^2 ...
 alpha3 = (C_a.*D_a - A_a.*F_a)./(A_a.*E_a - B_a.*D_a);
 alpha4 = (C_a.*E_a - B_a.*F_a)./(A_a.*E_a - B_a.*D_a);
 
+%Linear Acceleration of P
+A_A = a*alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
+    - a*omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
+A_PA = p*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
+    - p*omega3.^2.*(cosd(theta3g+delta)+1i*sind(theta3g+delta));
+
+A_P = A_A + A_PA;
+
+%% Plot Acceleration
+figure(6)
+plot(theta2g, alpha4, '.');
+xlabel('Input Angle (\theta_2) [deg]')
+ylabel("\alpha_{5} [" + units +"/s^2]")
+
+if open
+    title('Link 5 Angular Acceleration vs Input Angle (Open)')
+else
+    title('Link 5 Angular Acceleration vs Input Angle (Closed)')
+end
+
+figure(7)
+plot(theta2g, abs(A_P), '.');
+xlabel('Input Angle (\theta_2) [deg]')
+ylabel("Linear Acceleration of Point F [" + units +"/s^2]")
+
+if open
+    title('Point F Linear Acceleration vs Input Angle (Open)')
+else
+    title('Point F Linear Acceleration vs Input Angle (Closed)')
+end
 %% Print Relevant Values
 %print values only if evaluating for one theta 2 input
 if length(theta2g) == 1
