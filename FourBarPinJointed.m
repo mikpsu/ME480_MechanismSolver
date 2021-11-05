@@ -4,34 +4,32 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-Lengths = [1, 1.1, 1.25, sqrt(1.2^2+.75^2)]; %a,b,c,d 
+Lengths = [0.4, 1.2, 0.8, 1.2]; %a,b,c,d 
 a = Lengths(1); %input (crank) length
 b = Lengths(2); %coupler length
 c = Lengths(3); %output length
 d = Lengths(4); %ground length
-units = 'cm'; %units of above link lengths
+units = 'm'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = 180+atand(1.2/0.75); %ccw angle from local +x axis to global X axis
+theta1 = 0; %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
-P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
-DF = 1.35;
-EF = sqrt(DF^2+b^2-2*DF*b*cosd(115));
-delta = -asind((1.35/EF)*sind(115)); %fixed angle between selected link vector and point vector on 
+P_link = 'a'; %define which link the point is on: 'a' 'b' or 'c'
+delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = EF; %distance from link pin joint to desired point P (e.g. AP)
+p = a/2; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 5; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 145; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta3_fig_g = 110; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 20; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg. 
 theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
 
 % given speed and acceleration of crank
-omega2 = 100*pi/30; %input velocity [rad/s]
+omega2 = -100*pi/30; %input velocity [rad/s]
 alpha2 = 0; %input acceleration [rad/s^2]
 
 %Custom input range for crank in local coordinates
@@ -506,3 +504,15 @@ if length(theta2g) == 1
     mechanism_state.Properties.VariableNames{4} = 'Acceleration [rad/s^2]';
     disp(mechanism_state)
 end
+
+%% Force Analysis
+m_a = 0.6; % [kg]
+m_b = 1.80;
+m_c = 1.2;
+
+%moments of inertia (slender rods)
+Ia = a^2*m_a/12;
+Ib = b^2*m_a/12;
+Ic = c^2*m_a/12;
+
+%
