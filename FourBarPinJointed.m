@@ -506,13 +506,99 @@ if length(theta2g) == 1
 end
 
 %% Force Analysis
-m_a = 0.6; % [kg]
-m_b = 1.80;
-m_c = 1.2;
+% applied force
+F_P = 0;
+F_Px = 0;
+F_Py = 0;
 
-%moments of inertia (slender rods)
-Ia = a^2*m_a/12;
-Ib = b^2*m_a/12;
-Ic = c^2*m_a/12;
+R_Px = 0;
+R_Py = 0;
 
-%
+% applied torque
+T4 = 0;
+
+m2 = 0.6; % [kg]
+m3 = 1.80;
+m4 = 1.2;
+
+% moments of inertia (slender rods)
+I2 = a^2*m2/12;
+I3 = b^2*m3/12;
+I4 = c^2*m4/12;
+
+% R components (slender rods with CG at center)
+R_12 = a/2 * (cosd(theta2g-180) + 1i*sind(theta2g-180));
+R_12x = real(R_12);
+R_12y = imag(R_12);
+
+R_32 = a/2 * (cosd(theta2g) + 1i*sind(theta2g));
+R_32x = real(R_32);
+R_32y = imag(R_32);
+
+R_23 = b/2 * (cosd(theta3g-180) + 1i*sind(theta3g-180));
+R_23x = real(R_23);
+R_23y = imag(R_23);
+
+R_43 = b/2 * (cosd(theta3g) + 1i*sind(theta3g));
+R_43x = real(R_43);
+R_43y = imag(R_43);
+
+R_34 = c/2 * (cosd(theta4g) + 1i*sind(theta4g));
+R_34x = real(R_34);
+R_34y = imag(R_34);
+
+R_14 = c/2 * (cosd(theta4g-180) + 1i*sind(theta4g-180));
+R_14x = real(R_14);
+R_14y = imag(R_14);
+
+% CG accelerations
+A_G2 = a/2 * alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
+    - a/2 * omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
+A_G2x = real(A_G2);
+A_G2y = imag(A_G2);
+
+A_A = a*alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
+    - a*omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
+A_G2A = (b/2)*alpha3.*(-sind(theta3g)+1i*cosd(theta3g)) ...
+    - (b/2)*omega3.^2.*(cosd(theta3g)+1i*sind(theta3g));
+A_G3 = A_A + A_G2A;
+A_G3x = real(A_G3);
+A_G3y = imag(A_G3);
+
+A_G4 = c/2 * alpha4.*(-sind(theta4g)+1i*cosd(theta4g)) ...
+    - a/2 * omega4.^2.*(cosd(theta4g)+1i*sind(theta4g));
+A_G4x = real(A_G4);
+A_G4y = imag(A_G4);
+
+% solve system of equations
+A_fa =   [1 0 1 0 0 0 0 0 0;
+         0 1 0 1 0 0 0 0 0;
+         -R_12y R_12x -R_32y R_32x 0 0 0 0 1;
+         0 0 -1 0 1 0 0 0 0;
+         0 0 0 -1 0 1 0 0 0;
+         0 0 R_23y -R_23x -R_43y R_43x 0 0 0;
+         0 0 0 0 -1 0 1 0 0;
+         0 0 0 0 0 -1 0 1 0;
+         0 0 0 0 R_34y -R_34x -R_14y R_14x 0];
+b_fa = [m2*A_G2x;
+     m2*A_G2y;
+     I2*alpha2;
+     m3*A_G3x-F_Px;
+     m3*A_G3y-F_Py;
+     I3*alpha3 - R_Px*F_Py + R_Py*F_Px;
+     m4*A_G4x;
+     m4*A_G4y;
+     I4*alpha4 - T4];
+ 
+x_fa = linsolve(A_fa,b_fa);
+
+% Force magnitudes
+F_12 = sqrt(x_fa(1)^2+x_fa(2)^2);
+
+F_32 = sqrt(x_fa(3)^2+x_fa(4)^2);
+
+F_43 = sqrt(x_fa(5)^2+x_fa(6)^2);
+
+F_14 = sqrt(x_fa(7)^2+x_fa(8)^2);
+
+T_2 = x_fa(9);
