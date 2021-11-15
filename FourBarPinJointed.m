@@ -4,7 +4,7 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-Lengths = [0.4, 1.2, 0.8, 1.2]; %a,b,c,d 
+Lengths = [9.174, 12.97, 9.573, sqrt(2.79^2+6.948^2)]; %a,b,c,d 
 a = Lengths(1); %input (crank) length
 b = Lengths(2); %coupler length
 c = Lengths(3); %output length
@@ -12,7 +12,7 @@ d = Lengths(4); %ground length
 units = 'm'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = 0; %ccw angle from local +x axis to global X axis
+theta1 = 90-atand(2.79/6.948); %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
@@ -22,14 +22,14 @@ delta = 0; %fixed angle between selected link vector and point vector on
 p = a/2; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 145; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 360-theta1-26; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta3_fig_g = 20; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 4; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg. 
 theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
 
 % given speed and acceleration of crank
-omega2 = -100*pi/30; %input velocity [rad/s]
+omega2 = 0.01; %input velocity [rad/s]
 alpha2 = 0; %input acceleration [rad/s^2]
 
 %Custom input range for crank in local coordinates
