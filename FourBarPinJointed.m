@@ -16,10 +16,10 @@ theta1 = 90-atand(2.79/6.948); %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
-P_link = 'a'; %define which link the point is on: 'a' 'b' or 'c'
-delta = 0; %fixed angle between selected link vector and point vector on 
+P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
+delta = -23.76; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = a/2; %distance from link pin joint to desired point P (e.g. AP)
+p = 7.09; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
 theta2_fig_g = 360-theta1-26; %approximate theta 2 for determining configuration of 
@@ -521,10 +521,15 @@ m2 = 0.6; % [kg]
 m3 = 1.80;
 m4 = 1.2;
 
+% self-weights
+w2 = 2*2;
+w4 = 2*2;
+w3 = 10;
+
 % moments of inertia (slender rods)
-I2 = a^2*m2/12;
-I3 = b^2*m3/12;
-I4 = c^2*m4/12;
+I2 = 0.071;
+I3 = 0.430;
+I4 = 0.077;
 
 % R components (slender rods with CG at center)
 R_12 = a/2 * (cosd(theta2g-180) + 1i*sind(theta2g-180));
@@ -535,11 +540,11 @@ R_32 = a/2 * (cosd(theta2g) + 1i*sind(theta2g));
 R_32x = real(R_32);
 R_32y = imag(R_32);
 
-R_23 = b/2 * (cosd(theta3g-180) + 1i*sind(theta3g-180));
+R_23 = 7.09 * (cosd(theta3g+delta-180) + 1i*sind(theta3g+delta-180));
 R_23x = real(R_23);
 R_23y = imag(R_23);
 
-R_43 = b/2 * (cosd(theta3g) + 1i*sind(theta3g));
+R_43 = 7.09 * (cosd(theta3g-delta) + 1i*sind(theta3g-delta));
 R_43x = real(R_43);
 R_43y = imag(R_43);
 
@@ -559,8 +564,8 @@ A_G2y = imag(A_G2);
 
 A_A = a*alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
     - a*omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
-A_G2A = (b/2)*alpha3.*(-sind(theta3g)+1i*cosd(theta3g)) ...
-    - (b/2)*omega3.^2.*(cosd(theta3g)+1i*sind(theta3g));
+A_G2A = (7.09)*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
+    - (7.09)*omega3.^2.*(cosd(theta3g+delta)+1i*sind(theta3g+delta));
 A_G3 = A_A + A_G2A;
 A_G3x = real(A_G3);
 A_G3y = imag(A_G3);
@@ -581,13 +586,13 @@ A_fa =   [1 0 1 0 0 0 0 0 0;
          0 0 0 0 0 -1 0 1 0;
          0 0 0 0 R_34y -R_34x -R_14y R_14x 0];
 b_fa = [m2*A_G2x;
-     m2*A_G2y;
+     m2*A_G2y + w2;
      I2*alpha2;
-     m3*A_G3x-F_Px;
+     m3*A_G3x-F_Px + w3;
      m3*A_G3y-F_Py;
      I3*alpha3 - R_Px*F_Py + R_Py*F_Px;
      m4*A_G4x;
-     m4*A_G4y;
+     m4*A_G4y + w4;
      I4*alpha4 - T4];
  
 x_fa = linsolve(A_fa,b_fa);
@@ -601,4 +606,4 @@ F_43 = sqrt(x_fa(5)^2+x_fa(6)^2);
 
 F_14 = sqrt(x_fa(7)^2+x_fa(8)^2);
 
-T_2 = x_fa(9);
+T_12 = x_fa(9);
