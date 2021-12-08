@@ -517,14 +517,19 @@ R_Py = 0;
 % applied torque
 T4 = 0;
 
-m2 = 0.6; % [kg]
-m3 = 1.80;
-m4 = 1.2;
+% gravitational acceleration in/s^2
+g = 386.08858267717;
 
 % self-weights
 w2 = 2*2;
-w4 = 2*2;
 w3 = 10;
+w4 = 2*2;
+
+
+% convert to masses
+m2 = w2/g; % [kg]
+m3 = w3/g;
+m4 = w4/g;
 
 % moments of inertia (slender rods)
 I2 = 0.071;
@@ -588,8 +593,8 @@ A_fa =   [1 0 1 0 0 0 0 0 0;
 b_fa = [m2*A_G2x;
      m2*A_G2y + w2;
      I2*alpha2;
-     m3*A_G3x-F_Px + w3;
-     m3*A_G3y-F_Py;
+     m3*A_G3x-F_Px;
+     m3*A_G3y-F_Py + w3;
      I3*alpha3 - R_Px*F_Py + R_Py*F_Px;
      m4*A_G4x;
      m4*A_G4y + w4;
