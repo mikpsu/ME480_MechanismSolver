@@ -621,7 +621,9 @@ V_G2 = a/2 .* omega2.*(-sind(theta2g)+1i.*cosd(theta2g)); %cg of link 2
 V_G2x = real(V_G2);
 V_G2y = imag(V_G2);
 
-V_G3A = 7.09 .* omega3 .* (-sind(theta3g+delta)+1i.*cosd(theta3g+delta)); %cg of link 3 relative to link 1 end
+%cg of link 3 relative to link 1 end
+V_G3A = 7.09 .* omega3 .* (-sind(theta3g+delta)+1i.*cosd(theta3g+delta)); 
+
 %VA_g = velocity of A (crank end), is tangential to crank arc
 V_G3 = VA_g + V_G3A; %cg of link 3
 V_G3x = real(V_G3);
@@ -639,8 +641,9 @@ V_G4y = imag(V_G4);
 %Energy Equation
 syms T12
 Energy_LHS = -w2*V_G2y - w3*V_G3y - w4*V_G4y + T12*omega2;
-Energy_RHS = m2*(A_G2x*V_G2x + A_G2y*V_G2y) + m3*(A_G3x*V_G3x + A_G3y*V_G3y) ...
-    + m4*(A_G4x*V_G4x + A_G4y*V_G4y) + (I2*alpha2*omega2+I3*alpha3*omega3+I4*alpha4*omega4);
+Energy_RHS = m2*(A_G2x*V_G2x + A_G2y*V_G2y) + m3*(A_G3x*V_G3x + ... 
+    A_G3y*V_G3y) + m4*(A_G4x*V_G4x + A_G4y*V_G4y) + ...
+    (I2*alpha2*omega2+I3*alpha3*omega3+I4*alpha4*omega4);
 
 T_12e = solve(Energy_LHS==Energy_RHS, T12);
 T_12e = double(T_12e);
