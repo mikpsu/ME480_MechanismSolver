@@ -9,7 +9,7 @@ a = Lengths(1); %input (crank) length
 b = Lengths(2); %coupler length
 c = Lengths(3); %output length
 d = Lengths(4); %ground length
-units = 'm'; %units of above link lengths
+units = 'in'; %units of above link lengths
 
 % transform between local and global coordinates
 theta1 = 90-atand(2.79/6.948); %ccw angle from local +x axis to global X axis
@@ -515,7 +515,9 @@ R_Px = 0;
 R_Py = 0;
 
 % applied torque
-T4 = 0;
+T4 = 0; %torque on link 4
+T3 = 0; %torque on link 3
+T12 = 0; %torque on link 2
 
 % gravitational acceleration in/s^2
 g = 386.08858267717;
@@ -569,9 +571,9 @@ A_G2y = imag(A_G2);
 
 A_A = a*alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
     - a*omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
-A_G2A = (7.09)*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
+A_G3A = (7.09)*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
     - (7.09)*omega3.^2.*(cosd(theta3g+delta)+1i*sind(theta3g+delta));
-A_G3 = A_A + A_G2A;
+A_G3 = A_A + A_G3A;
 A_G3x = real(A_G3);
 A_G3y = imag(A_G3);
 
@@ -612,3 +614,33 @@ F_43 = sqrt(x_fa(5)^2+x_fa(6)^2);
 F_14 = sqrt(x_fa(7)^2+x_fa(8)^2);
 
 T_12 = x_fa(9);
+
+%% Torque Analysis by Energy Method
+%CG Velocities
+V_G2 = a/2 .* omega2.*(-sind(theta2g)+1i.*cosd(theta2g)); %cg of link 2
+V_G2x = real(V_G2);
+V_G2y = imag(V_G2);
+
+V_G3A = 7.09 .* omega3 .* (-sind(theta3g+delta)+1i.*cosd(theta3g+delta)); %cg of link 3 relative to link 1 end
+%VA_g = velocity of A (crank end), is tangential to crank arc
+V_G3 = VA_g + V_G3A; %cg of link 3
+V_G3x = real(V_G3);
+V_G3y = imag(V_G3);
+
+V_G4 = c/2 .* omega4 .*(-sind(theta4g)+1i.*cosd(theta4g)); %cg of link 4
+V_G4x = real(V_G4);
+V_G4y = imag(V_G4);
+
+
+% CG Accelerations found in previous section
+% Moments of inertia defined in previous section
+% Torques defined in previous section
+
+%Energy Equation
+syms T12
+Energy_LHS = -w2*V_G2y - w3*V_G3y - w4*V_G4y + T12*omega2;
+Energy_RHS = m2*(A_G2x*V_G2x + A_G2y*V_G2y) + m3*(A_G3x*V_G3x + A_G3y*V_G3y) ...
+    + m4*(A_G4x*V_G4x + A_G4y*V_G4y) + (I2*alpha2*omega2+I3*alpha3*omega3+I4*alpha4*omega4);
+
+T_12e = solve(Energy_LHS==Energy_RHS, T12);
+T_12e = double(T_12e);
