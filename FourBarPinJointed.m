@@ -4,33 +4,33 @@ clc, clear, close all
 
 %% 4 Bar Pin Joint Mechanism Parameters
 % Link lengths
-Lengths = [9.174, 12.97, 9.573, sqrt(2.79^2+6.948^2)]; %a,b,c,d 
+Lengths = [290/1000, 170/1000, 390/1000, 209/1000]; %a,b,c,d 
 a = Lengths(1); %input (crank) length
 b = Lengths(2); %coupler length
 c = Lengths(3); %output length
 d = Lengths(4); %ground length
-units = 'in'; %units of above link lengths
+units = 'mm'; %units of above link lengths
 
 % transform between local and global coordinates
-theta1 = 90-atand(2.79/6.948); %ccw angle from local +x axis to global X axis
+theta1 = 360 - 133.5; %ccw angle from local +x axis to global X axis
      %local +x points from crank ground to ouput ground (O2 to O4)  
      
 % point of interest P on linkage
 P_link = 'b'; %define which link the point is on: 'a' 'b' or 'c'
-delta = -23.76; %fixed angle between selected link vector and point vector on 
+delta = 0; %fixed angle between selected link vector and point vector on 
                 %link. e.g. angle between AB and AP. cw = negative
-p = 7.09; %distance from link pin joint to desired point P (e.g. AP)
+p = 350; %distance from link pin joint to desired point P (e.g. AP)
 
 % position of mechanism shown in figure
-theta2_fig_g = 360-theta1-26; %approximate theta 2 for determining configuration of 
+theta2_fig_g = 200; %approximate theta 2 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg.
-theta3_fig_g = 4; %approximate theta 3 for determining configuration of 
+theta3_fig_g = 180; %approximate theta 3 for determining configuration of 
                     %figure. Global system. Must be between 0-360 deg. 
 theta2_fig_l = theta2_fig_g + theta1; %DO NOT EDIT                 
 
 % given speed and acceleration of crank
-omega2 = 0.01; %input velocity [rad/s]
-alpha2 = 0; %input acceleration [rad/s^2]
+omega2 = -3; %input velocity [rad/s]
+alpha2 = 1.60; %input acceleration [rad/s^2]
 
 %Custom input range for crank in local coordinates
 override_togs = 1; %change to 1 to use custom range
@@ -509,76 +509,83 @@ end
 % applied force
 F_P = 0;
 F_Px = 0;
-F_Py = 0;
-
-R_Px = 0;
-R_Py = 0;
+F_Py = -110;
 
 % applied torque
 T4 = 0; %torque on link 4
 T3 = 0; %torque on link 3
-T12 = 0; %torque on link 2
+% T12 = 0; %torque on link 2
 
-% gravitational acceleration in/s^2
-g = 386.08858267717;
+% gravitational acceleration in/s^2, m/s^2
+g_in = 386.08858267717;
+g_m = 9.81;
+
+% given masses kg
+m2 = 3.1;
+m3 = 5.2;
+m4 = 4.1;
 
 % self-weights
-w2 = 2*2;
-w3 = 10;
-w4 = 2*2;
+w2 = m2*g_m;
+w3 = m3*g_m;
+w4 = m4*g_m;
 
 
 % convert to masses
-m2 = w2/g; % [kg]
-m3 = w3/g;
-m4 = w4/g;
+% m2 = w2/g_m; % [kg]
+% m3 = w3/g_m;
+% m4 = w4/g_m;
 
 % moments of inertia (slender rods)
-I2 = 0.071;
-I3 = 0.430;
-I4 = 0.077;
+I2 = 0.026;
+I3 = 0.088;
+I4 = 0.060;
 
 % R components (slender rods with CG at center)
-R_12 = a/2 * (cosd(theta2g-180) + 1i*sind(theta2g-180));
+R_12 = 150/1000 * (cosd(theta2g-180) + 1i*sind(theta2g-180));
 R_12x = real(R_12);
 R_12y = imag(R_12);
 
-R_32 = a/2 * (cosd(theta2g) + 1i*sind(theta2g));
+R_32 = (290-150)/1000 * (cosd(theta2g) + 1i*sind(theta2g));
 R_32x = real(R_32);
 R_32y = imag(R_32);
 
-R_23 = 7.09 * (cosd(theta3g+delta-180) + 1i*sind(theta3g+delta-180));
+R_23 = (75+170)/1000 * (cosd(theta3g+delta-180) + 1i*sind(theta3g+delta-180));
 R_23x = real(R_23);
 R_23y = imag(R_23);
 
-R_43 = 7.09 * (cosd(theta3g-delta) + 1i*sind(theta3g-delta));
+R_P = (180-75)/1000 * (cosd(theta3g) + 1i*sind(theta3g));
+R_Px = real(R_P);
+R_Py = imag(R_P);
+
+R_43 = 75/1000 * (cosd(theta3g-delta-180) + 1i*sind(theta3g-delta-180));
 R_43x = real(R_43);
 R_43y = imag(R_43);
 
-R_34 = c/2 * (cosd(theta4g) + 1i*sind(theta4g));
+R_34 = (390-200)/1000 * (cosd(theta4g) + 1i*sind(theta4g));
 R_34x = real(R_34);
 R_34y = imag(R_34);
 
-R_14 = c/2 * (cosd(theta4g-180) + 1i*sind(theta4g-180));
+R_14 = 200/1000 * (cosd(theta4g-180) + 1i*sind(theta4g-180));
 R_14x = real(R_14);
 R_14y = imag(R_14);
 
 % CG accelerations
-A_G2 = a/2 * alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
-    - a/2 * omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
+A_G2 = 150/1000 * alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
+    - 150/1000 * omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
 A_G2x = real(A_G2);
 A_G2y = imag(A_G2);
 
 A_A = a*alpha2.*(-sind(theta2g)+1i*cosd(theta2g)) ...
     - a*omega2.^2.*(cosd(theta2g)+1i*sind(theta2g));
-A_G3A = (7.09)*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
-    - (7.09)*omega3.^2.*(cosd(theta3g+delta)+1i*sind(theta3g+delta));
+A_G3A = (75+170)/1000*alpha3.*(-sind(theta3g+delta)+1i*cosd(theta3g+delta)) ...
+    - (75+170)/1000*omega3.^2.*(cosd(theta3g+delta)+1i*sind(theta3g+delta));
 A_G3 = A_A + A_G3A;
 A_G3x = real(A_G3);
 A_G3y = imag(A_G3);
 
-A_G4 = c/2 * alpha4.*(-sind(theta4g)+1i*cosd(theta4g)) ...
-    - a/2 * omega4.^2.*(cosd(theta4g)+1i*sind(theta4g));
+A_G4 = 200/1000 * alpha4.*(-sind(theta4g)+1i*cosd(theta4g)) ...
+    - 200/1000 * omega4.^2.*(cosd(theta4g)+1i*sind(theta4g));
 A_G4x = real(A_G4);
 A_G4y = imag(A_G4);
 
